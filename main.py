@@ -10,12 +10,17 @@ def contest(name, year, count_tasks):
 
 def submit(team_name, contest_name, result):
     global teams_table
+    accepted = []
+    result = result.split()
+    for i in range(len(result)):
+        if result[i][0] == '+':
+            accepted.append(i + 1)
     if team_name not in teams_table:
-        teams_table[team_name] = {"contests": {contest_name: {"result": result}},
-                                  "total_res": result.count("+")}
+        teams_table[team_name] = {"contests": {contest_name: {"result": result, "accepted": accepted}},
+                                  "total_res": len(accepted)}
     else:
         teams_table[team_name]["contests"][contest_name] = {"result": result}
-        teams_table[team_name]["total_res"] += result.count("+")
+        teams_table[team_name]["total_res"] += len(accepted)
     return "Successes!"
 
 
@@ -24,11 +29,26 @@ def solved_amount(team_name):
 
 
 def top(n, year_from, year_to):
-    pass
+    from_team_to_res = {}
+    for contest_name in contest_table:
+        if year_from <= contest_table[contest_name]["year"] <= year_to:
+            for team_name in teams_table:
+                if team_name not in from_team_to_res:
+                    from_team_to_res[team_name] = len(teams_table[team_name]["contests"][contest_name]["accepted"])
+                else:
+                    from_team_to_res[team_name] += len(teams_table[team_name]["contests"][contest_name]["accepted"])
+    return dict(sorted(from_team_to_res.items(), key=lambda x: [x[1], x[0]])).keys()[:n]
 
 
 def most_difficult(n, contest_name):
-    pass
+    from_id_to_total_count = {}
+    for team_name in teams_table:
+        for task_id in teams_table[team_name][contest_name]["accepted"]:
+            if task_id not in from_id_to_total_count:
+                from_id_to_total_count[task_id] = 1
+            else:
+                from_id_to_total_count[task_id] += 1
+    return dict(sorted(from_id_to_total_count.items(), key=lambda x: [-x[1], x[0]])).keys()[:n]
 
 
 def main():
@@ -44,9 +64,9 @@ def main():
             if values[0] == "solved_amount":
                 print(solved_amount(values[1]))
             elif values[0] == "top":
-                print(top(int(values[1]), int(values[2]), int(values[3])))
+                print(*top(int(values[1]), int(values[2]), int(values[3])))
             elif values[0] == "most_difficult":
-                print(most_difficult(int(values[1]), values[2]))
+                print(*most_difficult(int(values[1]), values[2]))
             else:
                 print("Unknown statistic command, please try again!")
         else:
